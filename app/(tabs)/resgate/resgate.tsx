@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import CommonLayout from "@/components/Layout/CommonLayout";
 import { View, Platform, Alert } from "react-native";
-import { Button, Dialog, Text, TextInput } from "react-native-paper";
+import { Button, Dialog, Text, TextInput, ActivityIndicator } from "react-native-paper";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import * as S from "./index.styles";
 import { useForm, Controller } from "react-hook-form";
@@ -18,7 +18,7 @@ interface ResgateDTO {
   location: {
     latitude: number;
     longitude: number;
-    address?: string; 
+    address?: string;
   };
 }
 
@@ -41,6 +41,7 @@ export default function ResgateScreen() {
     longitude: number;
   } | null>(null);
   const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(false); 
 
   const { control, handleSubmit, reset, setValue } = useForm({
     resolver: yupResolver(schema),
@@ -63,8 +64,8 @@ export default function ResgateScreen() {
     })();
   }, []);
 
-
   const getCurrentLocation = async () => {
+    setLoading(true); 
     try {
       const location = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = location.coords;
@@ -72,7 +73,6 @@ export default function ResgateScreen() {
       setCurrentLocation({ latitude, longitude });
       setValue("location", { latitude, longitude });
 
-  
       const response = await axios.get(
         `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=fbbd341f56b445f0b46dbf4630a0ec50`
       );
@@ -87,6 +87,8 @@ export default function ResgateScreen() {
     } catch (error) {
       Alert.alert("Erro", "Não foi possível obter a localização.");
       console.error(error);
+    } finally {
+      setLoading(false); 
     }
   };
 
@@ -97,7 +99,15 @@ export default function ResgateScreen() {
   };
 
   const onSubmit = (data: ResgateDTO) => {
-    setResgates([...resgates, data]);
+    const novoResgate = {
+      ...data,
+      location: {
+        ...data.location,
+        address: address, 
+      },
+    };
+
+    setResgates((prevResgates) => [...prevResgates, novoResgate]); 
     hideDialog();
   };
 
@@ -127,10 +137,23 @@ export default function ResgateScreen() {
           <View key={index} style={{ marginBottom: 10 }}>
             <Text>Data: {r.date.toLocaleDateString()}</Text>
             <Text>Descrição: {r.description}</Text>
-            <Text>
-              Localização: {r.location.latitude}, {r.location.longitude}
-            </Text>
             {r.location.address && <Text>Endereço: {r.location.address}</Text>}
+
+            {/* Exibe o mapa pequeno */}
+            <View style={{ width: '100%', height: 150, marginTop: 10 }}>
+              <MapView
+                style={{ width: '100%', height: '100%', borderRadius: 10 }}
+                initialRegion={{
+                  latitude: r.location.latitude,
+                  longitude: r.location.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }}
+              >
+                <Marker coordinate={r.location} title="Local do Resgate" />
+              </MapView>
+            </View>
+
             <Button
               mode="outlined"
               onPress={() => {
@@ -206,6 +229,13 @@ export default function ResgateScreen() {
             </Dialog.Actions>
           </S.ViewShowDialog>
         </S.CenteredView>
+      )}
+
+      {/* Exibição de Loading */}
+      {loading && (
+        <View style={{ position: "absolute", top: "50%", left: "50%", transform: [{ translateX: -25 }, { translateY: -25 }] }}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
       )}
 
       {/* Modal de Mapa */}
