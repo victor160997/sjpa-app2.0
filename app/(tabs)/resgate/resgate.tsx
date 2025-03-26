@@ -10,6 +10,8 @@ import * as yup from "yup";
 import { DatePickerModal } from "react-native-paper-dates";
 import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
+import { ResgateContainer } from "./index.styles"; 
+
 
 interface ResgateDTO {
   description: string;
@@ -114,7 +116,7 @@ export default function ResgateScreen() {
           Registrar Novo Resgate
         </S.ViewButton>
         {resgates.map((r, index) => (
-          <View key={index} style={{ marginBottom: 10 }}>
+          <ResgateContainer key={index}>
             <Text>Data: {r.date.toLocaleDateString()}</Text>
             <Text>Descrição: {r.description}</Text>
             <Text>
@@ -133,8 +135,9 @@ export default function ResgateScreen() {
             >
               Ver no Mapa
             </Button>
-          </View>
+          </ResgateContainer>
         ))}
+
       </S.ViewScrollView>
 
       {/* Modal do Formulário */}
