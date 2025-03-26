@@ -37,3 +37,10 @@ export const CenteredView = styled.View`
   justify-content: center;
   align-items: center;
 `;
+
+export const ResgateContainer = styled(View)`
+  background-color: #ffffff;
+  padding: 15px;
+  margin: 10px;
+  border-radius: 10px;
+`;
