@@ -13,9 +13,17 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Este aplicativo precisa acessar a câmera para tirar fotos de resgates.",
+        "NSLocationWhenInUseUsageDescription": "Precisamos da sua localização para registrar o local do resgate."
+      }
     },
     "android": {
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"

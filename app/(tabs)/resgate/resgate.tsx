@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import CommonLayout from "@/components/Layout/CommonLayout";
-import { View, Platform } from "react-native";
+import { View, Platform, Alert } from "react-native";
 import { Button, Dialog, Text, TextInput } from "react-native-paper";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import * as S from "./index.styles";
@@ -10,8 +10,12 @@ import * as yup from "yup";
 import { DatePickerModal } from "react-native-paper-dates";
 import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
-import { ResgateContainer } from "./index.styles"; 
-
+import { ResgateContainer } from "./index.styles";
+import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
+import * as MediaLibrary from "expo-media-library";
+import { Ionicons, Entypo } from "@expo/vector-icons";
+import { Image } from "react-native";
+import {TouchableOpacity } from "react-native";
 
 interface ResgateDTO {
   description: string;
@@ -19,8 +23,9 @@ interface ResgateDTO {
   location: {
     latitude: number;
     longitude: number;
-    address?: string; // Endereço manual (opcional)
+    address?: string;
   };
+  photoUri?: string; // Added to store photo URI
 }
 
 const schema = yup.object().shape({
@@ -30,6 +35,7 @@ const schema = yup.object().shape({
     latitude: yup.number().required("Latitude é obrigatória"),
     longitude: yup.number().required("Longitude é obrigatória"),
   }),
+  photoUri: yup.string().optional(),
 });
 
 export default function ResgateScreen() {
@@ -37,11 +43,14 @@ export default function ResgateScreen() {
   const [visibleDialog, setVisibleDialog] = useState(false);
   const [visibleDatePicker, setVisibleDatePicker] = useState(false);
   const [visibleMap, setVisibleMap] = useState(false);
+  const [visibleCamera, setVisibleCamera] = useState(false); // State for camera view
   const [currentLocation, setCurrentLocation] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
   const [address, setAddress] = useState("");
+  const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = useRef<any>(null);
 
   const { control, handleSubmit, reset, setValue } = useForm({
     resolver: yupResolver(schema),
@@ -52,21 +61,26 @@ export default function ResgateScreen() {
         latitude: 0,
         longitude: 0,
       },
+      photoUri: "",
     },
   });
 
-  // Solicitar permissão de localização
+  // Request permissions for location and media library
   useEffect(() => {
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
+      const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
+      if (locationStatus !== "granted") {
         alert("Permissão para acessar a localização foi negada.");
-        return;
+      }
+
+      const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
+      if (mediaStatus !== "granted") {
+        Alert.alert("Permissão necessária", "Precisamos de acesso à galeria para salvar as fotos.");
       }
     })();
   }, []);
 
-  // Obter localização atual
+  // Get current location
   const getCurrentLocation = async () => {
     const location = await Location.getCurrentPositionAsync({});
     setCurrentLocation({
@@ -77,7 +91,33 @@ export default function ResgateScreen() {
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
     });
-    setVisibleDialog(true)
+    setVisibleDialog(true);
+  };
+
+  // Camera permission check
+  if (!permission) return <View />;
+  if (!permission.granted) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
+        <Text style={{ textAlign: "center", paddingBottom: 10, fontSize: 16 }}>
+          Precisamos da sua permissão para acessar a câmera
+        </Text>
+        <Button mode="contained" onPress={requestPermission}>
+          Conceder Permissão
+        </Button>
+      </View>
+    );
+  }
+
+  // Take photo
+  const takePhoto = async () => {
+    if (cameraRef.current) {
+      const photo = await cameraRef.current.takePictureAsync();
+      await MediaLibrary.saveToLibraryAsync(photo.uri);
+      setValue("photoUri", photo.uri);
+      setVisibleCamera(false);
+      Alert.alert("Sucesso", "Foto salva na galeria!");
+    }
   };
 
   const showDialog = () => setVisibleDialog(true);
@@ -88,7 +128,7 @@ export default function ResgateScreen() {
   };
 
   const onSubmit = (data: ResgateDTO) => {
-    setResgates([...resgates, data]);
+    setResgates([...resgates, { ...data, address }]);
     hideDialog();
   };
 
@@ -108,9 +148,7 @@ export default function ResgateScreen() {
             fontSize: 16,
             fontWeight: "bold",
           }}
-          icon={() => (
-            <Icon name="plus" size={22} />
-          )}
+          icon={() => <Icon name="plus" size={22} />}
           onPress={showDialog}
         >
           Registrar Novo Resgate
@@ -123,6 +161,12 @@ export default function ResgateScreen() {
               Localização: {r.location.latitude}, {r.location.longitude}
             </Text>
             {r.location.address && <Text>Endereço: {r.location.address}</Text>}
+            {r.photoUri && (
+              <Image
+                source={{ uri: r.photoUri }}
+                style={{ width: 100, height: 100, marginTop: 10 }}
+              />
+            )}
             <Button
               mode="outlined"
               onPress={() => {
@@ -137,11 +181,10 @@ export default function ResgateScreen() {
             </Button>
           </ResgateContainer>
         ))}
-
       </S.ViewScrollView>
 
-      {/* Modal do Formulário */}
-      {visibleDialog ? (
+      {/* Form Dialog */}
+      {visibleDialog && !visibleCamera && (
         <S.CenteredView>
           <S.ViewShowDialog visible={visibleDialog} onDismiss={hideDialog}>
             <Dialog.Title>Resgate</Dialog.Title>
@@ -159,7 +202,7 @@ export default function ResgateScreen() {
                       value={value}
                       error={!!error}
                     />
-                    {error && <Text style={{ color: 'red' }}>{error.message}</Text>}
+                    {error && <Text style={{ color: "red" }}>{error.message}</Text>}
                   </>
                 )}
               />
@@ -175,7 +218,7 @@ export default function ResgateScreen() {
                     >
                       {value.toLocaleDateString()}
                     </Button>
-                    {error && <Text style={{ color: 'red' }}>{error.message}</Text>}
+                    {error && <Text style={{ color: "red" }}>{error.message}</Text>}
                   </>
                 )}
               />
@@ -201,6 +244,19 @@ export default function ResgateScreen() {
                 onChangeText={setAddress}
                 style={{ marginTop: 10 }}
               />
+              <Button
+                mode="outlined"
+                onPress={() => setVisibleCamera(true)}
+                style={{ marginTop: 10 }}
+              >
+                Tirar Foto do Animal
+              </Button>
+              {control._formValues.photoUri && (
+                <Image
+                  source={{ uri: control._formValues.photoUri }}
+                  style={{ width: 100, height: 100, marginTop: 10 }}
+                />
+              )}
             </Dialog.Content>
             <Dialog.Actions>
               <Button onPress={hideDialog}>CANCELAR</Button>
@@ -208,10 +264,53 @@ export default function ResgateScreen() {
             </Dialog.Actions>
           </S.ViewShowDialog>
         </S.CenteredView>
-      ) : (
-        <View></View>
       )}
 
+      {/* Camera View */}
+      {visibleCamera && (
+        <S.CenteredView>
+          <CameraView
+            ref={cameraRef}
+            style={{ width: "100%", height: 400 }}
+            facing="back"
+            mode="picture"
+          >
+            <View
+              style={{
+                position: "absolute",
+                bottom: 30,
+                width: "100%",
+                flexDirection: "row",
+                justifyContent: "center",
+              }}
+            >
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#00000080",
+                  padding: 15,
+                  borderRadius: 50,
+                }}
+                onPress={takePhoto}
+              >
+                <Entypo name="camera" size={30} color="white" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#00000080",
+                  padding: 15,
+                  borderRadius: 50,
+                  marginLeft: 20,
+                }}
+                onPress={() => setVisibleCamera(false)}
+              >
+                <Ionicons name="close" size={30} color="white" />
+              </TouchableOpacity>
+            </View>
+          </CameraView>
+        </S.CenteredView>
+      )}
+
+      {/* Map View */}
       {visibleMap && currentLocation && (
         <S.CenteredView>
           <S.ViewShowDialog visible={visibleMap} onDismiss={() => setVisibleMap(false)}>
