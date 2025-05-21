@@ -2,13 +2,13 @@ import { ScrollView, ScrollViewProps, View, ViewProps } from "react-native";
 import { Card, CardProps, Button, ButtonProps, Dialog, DialogProps, } from "react-native-paper";
 import styled from "styled-components/native";
 
-export const ViewCardContainer = styled(Card.Title)<CardProps>`
+export const ViewCardContainer = styled(Card.Title) <CardProps>`
   margin: 10px;
   background-color: #e7e7e794;
   border-radius: 10px;
 `;
 
-export const ViewButton = styled(Button)<ButtonProps>`
+export const ViewButton = styled(Button) <ButtonProps>`
   margin: 10px;
   border-radius: 25px;
   height: 48px;
@@ -18,13 +18,18 @@ export const ViewButton = styled(Button)<ButtonProps>`
   
   `
 export const ViewShowDialog = styled(Dialog)<DialogProps>`
-position: absolute;
-align-self: center;
-justify-content: center;
-width: 90%; /* Define largura do Dialog */
+  position: absolute;
+  align-self: center;
+  justify-content: center;
+  width: 90%; /* Define largura do Dialog */
+  max-height: 90%;
 `;
 
-export const ViewScrollView = styled(ScrollView)<ScrollViewProps>` 
+export const DialogScrollContent = styled(ScrollView)<ScrollViewProps>`
+  max-height: 80%;
+`;
+
+export const ViewScrollView = styled(ScrollView) <ScrollViewProps>` 
     flex: 1;
 `;
 export const CenteredView = styled.View`
