@@ -20,6 +20,7 @@ import { View } from "react-native";
 import { getSectorByCode, getSectorById } from "@/repository/setor.repository";
 import { AnimalParams, BaiaParams, SectorParams } from "@/types/params";
 import { HeaderButtonsCOntainer } from "./styles";
+import { ShakeDetectorProvider } from "@/app/ShakeDetectorProvider";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -64,55 +65,108 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="sector/[id]"
-          options={({ route }) => {
-            const { id, name } = route.params as SectorParams;
-            return {
-              title: `Setor ${name}`,
-              headerRight: () => (
-                <HeaderButtonsCOntainer>
+      <ShakeDetectorProvider>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="sector/[id]"
+            options={({ route }) => {
+              const { id, name } = route.params as SectorParams;
+              return {
+                title: `Setor ${name}`,
+                headerRight: () => (
+                  <HeaderButtonsCOntainer>
+                    <IconButton
+                      icon="plus"
+                      onPress={() => {
+                        router.push({
+                          pathname: "/baia/create",
+                          params: { sector: name, id },
+                        });
+                      }}
+                    />
+                    <IconButton
+                      icon="pencil"
+                      onPress={() => {
+                        router.push({
+                          pathname: "/sector/edit/[id]",
+                          params: { id, name },
+                        });
+                      }}
+                    />
+                  </HeaderButtonsCOntainer>
+                ),
+              };
+            }}
+          />
+          <Stack.Screen name="sector/create" options={{ title: "Criar Setor" }} />
+          <Stack.Screen
+            name="sector/edit/[id]"
+            options={({ route }) => {
+              const { id, name } = route.params as SectorParams;
+              return { title: `Editar Setor ${name}` };
+            }}
+          />
+          <Stack.Screen name="baia/create" options={{ title: "Criar Baia" }} />
+          <Stack.Screen
+            name="animal/[id]"
+            options={({ route }) => {
+              const { id } = route.params as AnimalParams;
+              return {
+                title: "",
+                headerLeft: () => (
                   <IconButton
-                    icon="plus"
+                    icon="arrow-left"
                     onPress={() => {
-                      router.push({
-                        pathname: "/baia/create",
-                        params: { sector: name, id },
-                      });
+                      router.back();
                     }}
                   />
+                ),
+                headerRight: () => (
                   <IconButton
                     icon="pencil"
                     onPress={() => {
-                      router.push({
-                        pathname: "/sector/edit/[id]",
-                        params: { id, name },
-                      });
+                      router.push(`/animal/edit/${id}`);
                     }}
                   />
-                </HeaderButtonsCOntainer>
-              ),
-            };
-          }}
-        />
-        <Stack.Screen name="sector/create" options={{ title: "Criar Setor" }} />
-        <Stack.Screen
-          name="sector/edit/[id]"
-          options={({ route }) => {
-            const { id, name } = route.params as SectorParams;
-            return { title: `Editar Setor ${name}` };
-          }}
-        />
-        <Stack.Screen name="baia/create" options={{ title: "Criar Baia" }} />
-        <Stack.Screen
-          name="animal/[id]"
-          options={({ route }) => {
-            const { id } = route.params as AnimalParams;
-            return {
-              title: "",
+                ),
+              };
+            }}
+          />
+          <Stack.Screen
+            name="baia/[id]"
+            options={({ route }) => {
+              const { id, numeroBaia, idSector } = route.params as BaiaParams;
+
+              return {
+                title: `Baia ${numeroBaia ?? id}`,
+                headerRight: () => (
+                  <HeaderButtonsCOntainer>
+                    <IconButton
+                      icon="plus"
+                      onPress={() => {
+                        router.push({
+                          pathname: "/animal/create",
+                          params: { idBaia: id },
+                        });
+                      }}
+                    />
+                    <IconButton
+                      icon="pencil"
+                      onPress={() => {
+                        router.push(`/baia/edit/${id}`);
+                      }}
+                    />
+                  </HeaderButtonsCOntainer>
+                ),
+              };
+            }}
+          />
+          <Stack.Screen
+            name="animal/create"
+            options={{
+              title: "Cadastro de animal",
               headerLeft: () => (
                 <IconButton
                   icon="arrow-left"
@@ -121,75 +175,24 @@ function RootLayoutNav() {
                   }}
                 />
               ),
-              headerRight: () => (
-                <IconButton
-                  icon="pencil"
-                  onPress={() => {
-                    router.push(`/animal/edit/${id}`);
-                  }}
-                />
-              ),
-            };
-          }}
-        />
-        <Stack.Screen
-          name="baia/[id]"
-          options={({ route }) => {
-            const { id, numeroBaia, idSector } = route.params as BaiaParams;
-
-            return {
-              title: `Baia ${numeroBaia ?? id}`,
-              headerRight: () => (
-                <HeaderButtonsCOntainer>
-                  <IconButton
-                    icon="plus"
-                    onPress={() => {
-                      router.push({
-                        pathname: "/animal/create",
-                        params: { idBaia: id },
-                      });
-                    }}
-                  />
-                  <IconButton
-                    icon="pencil"
-                    onPress={() => {
-                      router.push(`/baia/edit/${id}`);
-                    }}
-                  />
-                </HeaderButtonsCOntainer>
-              ),
-            };
-          }}
-        />
-        <Stack.Screen
-          name="animal/create"
-          options={{
-            title: "Cadastro de animal",
-            headerLeft: () => (
-              <IconButton
-                icon="arrow-left"
-                onPress={() => {
-                  router.back();
-                }}
-              />
-            ),
-          }}
-        />
-        <Stack.Screen
-          name="baia/edit/[id]"
-          options={({ route }) => {
-            const { id } = route.params as BaiaParams;
-            return { title: `Editar Baia` };
-          }}
-        />
-        <Stack.Screen
-          name="animal/edit/[id]"
-          options={({ route }) => {
-            const { id } = route.params as BaiaParams;
-            return { title: `Editar` };
-          }}
-        />
-      </Stack>
+            }}
+          />
+          <Stack.Screen
+            name="baia/edit/[id]"
+            options={({ route }) => {
+              const { id } = route.params as BaiaParams;
+              return { title: `Editar Baia` };
+            }}
+          />
+          <Stack.Screen
+            name="animal/edit/[id]"
+            options={({ route }) => {
+              const { id } = route.params as BaiaParams;
+              return { title: `Editar` };
+            }}
+          />
+        </Stack>
+      </ShakeDetectorProvider>
     </ThemeProvider>
   );
 }
