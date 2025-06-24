@@ -64,6 +64,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon name="support" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="charts/charts"
+        options={{
+          tabBarItemStyle: { alignContent: "space-around" },
+          title: "Gráficos",
+          tabBarIcon: ({ color }) => <TabBarIcon name="pie-chart" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

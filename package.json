@@ -28,6 +28,7 @@
     "expo-location": "^18.0.8",
     "expo-media-library": "~17.0.6",
     "expo-router": "~4.0.17",
+    "expo-sensors": "~14.0.2",
     "expo-splash-screen": "~0.29.22",
     "expo-status-bar": "~2.0.1",
     "expo-system-ui": "~4.0.8",
@@ -37,7 +38,10 @@
     "react-dom": "18.3.1",
     "react-hook-form": "^7.53.0",
     "react-native": "0.76.7",
+    "react-native-chart-kit": "^6.12.0",
     "react-native-gesture-handler": "~2.20.2",
+    "react-native-gifted-charts": "^1.4.61",
+    "react-native-linear-gradient": "^2.8.3",
     "react-native-maps": "^1.20.1",
     "react-native-paper": "^5.13.1",
     "react-native-paper-dates": "^0.22.38",
@@ -46,12 +50,12 @@
     "react-native-reanimated": "~3.16.1",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
+    "react-native-svg": "^15.8.0",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.10",
     "sjpa-app": "file:",
     "styled-components": "^6.1.13",
-    "yup": "^1.4.0",
-    "expo-sensors": "~14.0.2"
+    "yup": "^1.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
